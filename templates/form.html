@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Founder Info</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 py-10 px-6">
+    <div class="max-w-3xl mx-auto bg-white p-8 shadow rounded">
+        <h1 class="text-2xl font-bold mb-6">Founder Details</h1>
+        <form method="POST" class="space-y-4">
+            {% for label, name in [
+                ("What is Founder Name?", "founder_name"),
+                ("What are you building?", "building"),
+                ("Do you have co-builders?", "co_builders"),
+                ("Best contact (email/phone)?", "best_contact"),
+                ("Show what you built (link)?", "show_built"),
+                ("Professional presence (LinkedIn, etc.)?", "professional_presence"),
+                ("Which industry does your product come under?", "industry"),
+                ("Company Name", "company_name"),
+                ("Best description of your company", "description"),
+                ("Sectors", "sectors"),
+                ("Current traction", "traction"),
+                ("Required funding", "required_funding"),
+                ("Previous funding", "previous_funding"),
+                ("Target countries for investment", "target_countries"),
+                ("Product stage", "product_stage")
+            ] %}
+                <div>
+                    <label class="block font-semibold">{{ label }}</label>
+                    <input type="text" name="{{ name }}" required class="w-full border rounded px-3 py-2 mt-1" />
+                </div>
+            {% endfor %}
+            <div>
+                <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
+                    Submit
+                </button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Edit Email</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 p-6">
+  <h1 class="text-2xl font-bold mb-4">Edit Your Email</h1>
+  <form method="post">
+    <label class="block mb-2 font-semibold">Subject</label>
+    <input type="text" name="subject" value="{{ subject }}" class="w-full p-2 mb-4 rounded border border-gray-300">
+
+    <label class="block mb-2 font-semibold">Body</label>
+    <textarea name="body" rows="15" class="w-full p-2 rounded border border-gray-300">{{ body }}</textarea>
+
+    <button type="submit" class="mt-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+      Continue
+    </button>
+  </form>
+</body>
+</html>
