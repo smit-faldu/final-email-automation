@@ -8,7 +8,12 @@ import os
 auth_bp = Blueprint('auth', __name__)
 
 CLIENT_SECRETS_FILE = "client_secret.json"
-SCOPES = ['https://mail.google.com/']
+SCOPES = [
+    "https://www.googleapis.com/auth/gmail.readonly",
+    "https://www.googleapis.com/auth/gmail.send",
+    "https://www.googleapis.com/auth/gmail.compose",
+    "https://mail.google.com/"
+]
 
 def get_flow():
     return Flow.from_client_secrets_file(

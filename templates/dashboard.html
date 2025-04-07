@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Email Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light p-4">
+
+<div class="container">
+    <h1 class="mb-4">📬 Email Dashboard</h1>
+
+    <ul class="nav nav-tabs" id="dashboardTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="sent-tab" data-bs-toggle="tab" data-bs-target="#sent" type="button" role="tab">Sent</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="scheduled-tab" data-bs-toggle="tab" data-bs-target="#scheduled" type="button" role="tab">Scheduled</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="replies-tab" data-bs-toggle="tab" data-bs-target="#replies" type="button" role="tab">Replies</button>
+        </li>
+    </ul>
+
+    <div class="tab-content p-3 bg-white border border-top-0" id="dashboardTabsContent">
+        <!-- Sent Emails -->
+        <div class="tab-pane fade show active" id="sent" role="tabpanel">
+            {% for email in sent_emails %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">{{ email.subject }}</h5>
+                    <p class="card-text">{{ email.body[:100] }}...</p>
+                    <p class="text-muted"><strong>To:</strong> {{ email.to }}</p>
+                    <p class="text-muted"><strong>Sent At:</strong> {{ email.timestamp }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Scheduled Emails -->
+        <div class="tab-pane fade" id="scheduled" role="tabpanel">
+            {% for job in scheduled_emails %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">{{ job.subject }}</h5>
+                    <p class="card-text">{{ job.body }}...</p>
+                    <p class="text-muted"><strong>To:</strong> {{ job.to_emails|join(', ') }}</p>
+                    <p class="text-muted"><strong>Scheduled Time:</strong> {{ job.next_run_time }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Replies -->
+        <div class="tab-pane fade" id="replies" role="tabpanel">
+            {% for reply in replies %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">{{ reply.subject }}</h5>
+                    <p class="card-text">{{ reply.snippet }}</p>
+                    <p class="text-muted"><strong>From:</strong> {{ reply.from }}</p>
+                    <p class="text-muted"><strong>Received At:</strong> {{ reply.timestamp }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

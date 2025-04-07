@@ -1,51 +1,87 @@
-<!-- finalize.html -->
+<!-- templates/finalize.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Finalize Email</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Finalize Email</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-100 text-gray-800">
 
-    <div class="max-w-3xl mx-auto p-6 bg-white shadow-md rounded-lg mt-12">
-        <h3 class="text-2xl font-semibold text-gray-800 mb-6">Finalize Email Preview</h3>
-        
-        <!-- Display Subject and Body -->
-        <div class="mb-4">
-            <p class="text-lg font-semibold text-gray-700"><strong>Subject:</strong> {{ email.subject }}</p>
-        </div>
-        
-        <div class="mb-4">
-            <p class="text-lg font-semibold text-gray-700"><strong>Body:</strong> {{ email.body }}</p>
-        </div>
+  <div class="max-w-3xl mx-auto mt-12 p-8 bg-white shadow-xl rounded-2xl">
+    <h1 class="text-3xl font-bold mb-6 text-center">Finalize Email</h1>
 
-        <!-- Form to handle recipient emails and actions -->
-        <form action="{{ url_for('finalize_email') }}" method="POST">
-            <!-- Input for recipient emails -->
-            <div class="mb-4">
-                <label for="to_emails" class="block text-sm font-medium text-gray-700">To (comma-separated):</label>
-                <input type="text" id="to_emails" name="to_emails" class="mt-1 p-2 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
-            </div>
-
-            <!-- Action Buttons: Send, Schedule, Draft -->
-            <div class="flex space-x-4 mt-6">
-                <button type="submit" name="action" value="send" class="w-full py-2 px-4 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
-                    Send Email
-                </button>
-                
-                <button type="submit" name="action" value="schedule" class="w-full py-2 px-4 bg-yellow-600 text-white font-semibold rounded-md shadow-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50">
-                    Schedule Email
-                </button>
-                
-                <button type="submit" name="action" value="draft" class="w-full py-2 px-4 bg-gray-600 text-white font-semibold rounded-md shadow-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">
-                    Save as Draft
-                </button>
-            </div>
-        </form>
+    <div class="mb-6">
+      <p><strong>Subject:</strong> {{ email.subject }}</p>
+      <p><strong>Body:</strong></p>
+      <p class="whitespace-pre-line bg-gray-50 border rounded-md p-4 mt-2">{{ email.body }}</p>
     </div>
 
+    <form action="{{ url_for('finalize_email') }}" method="POST">
+      <!-- Recipient Emails -->
+      <div class="mb-4">
+        <label for="to_emails" class="block font-medium">To (comma-separated):</label>
+        <input type="text" id="to_emails" name="to_emails" required
+               class="mt-1 p-3 w-full border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" />
+      </div>
+
+      <!-- Schedule Type -->
+      <div class="mb-4">
+        <label for="schedule_type" class="block font-medium">Schedule Type:</label>
+        <select id="schedule_type" name="schedule_type"
+                class="mt-1 p-3 w-full border border-gray-300 rounded-md shadow-sm">
+          <option value="">-- Select Schedule Type --</option>
+          <option value="batch">Send N per day</option>
+          <option value="fixed_time">Send all at specific time</option>
+        </select>
+      </div>
+
+      <!-- Batch Input -->
+      <div class="mb-4 hidden" id="batch_section">
+        <label for="batch_count" class="block font-medium">Emails per day:</label>
+        <input type="number" id="batch_count" name="batch_count" min="1"
+               class="mt-1 p-3 w-full border border-gray-300 rounded-md shadow-sm" />
+      </div>
+
+      <!-- Fixed Time Input -->
+      <div class="mb-4 hidden" id="time_section">
+        <label for="scheduled_time" class="block font-medium">Schedule Date & Time:</label>
+        <input type="datetime-local" id="scheduled_time" name="scheduled_time"
+               class="mt-1 p-3 w-full border border-gray-300 rounded-md shadow-sm" />
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-col md:flex-row gap-4 mt-6">
+        <button type="submit" name="action" value="send"
+                class="flex-1 py-3 px-5 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+          Send Email
+        </button>
+
+        <button type="submit" name="action" value="schedule"
+                class="flex-1 py-3 px-5 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600">
+          Schedule Email
+        </button>
+
+        <button type="submit" name="action" value="draft"
+                class="flex-1 py-3 px-5 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
+          Save as Draft
+        </button>
+      </div>
+    </form>
+    <div class="mt-6 text-center">
+        <a href="{{ url_for('dashboard') }}" class="inline-block bg-green-600 text-white px-6 py-2 rounded-md font-semibold shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50">
+            View Dashboard
+        </a>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById("schedule_type").addEventListener("change", function () {
+      const type = this.value;
+      document.getElementById("batch_section").classList.toggle("hidden", type !== "batch");
+      document.getElementById("time_section").classList.toggle("hidden", type !== "fixed_time");
+    });
+  </script>
 </body>
 </html>

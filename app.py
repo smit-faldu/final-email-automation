@@ -2,8 +2,10 @@
 from flask import Flask, render_template, request, redirect, session, url_for
 from auth import auth_bp
 from email_template import generate_email_variants
-from email_utils import send_email, save_draft, schedule_email
+from email_utils import send_email, save_draft, schedule_batch_emails,schedule_all_at_once,get_scheduled_emails,fetch_replies
 import os
+import datetime
+import json
 
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 app = Flask(__name__)
@@ -59,44 +61,53 @@ def edit_email(variant):
 
 @app.route("/finalize", methods=["GET", "POST"])
 def finalize_email():
-    # Check if selected email is stored in the session
     if 'selected_email' not in session:
-        return redirect(url_for("preview_emails"))  # Redirect if no email was selected
-    
+        return redirect(url_for("preview_emails"))
+
     subject = session['selected_email'].get('subject', '')
     body = session['selected_email'].get('body', '')
 
     if request.method == "POST":
         if "credentials" not in session:
             return redirect(url_for("auth.login"))
-        
+
         to_emails = request.form.get("to_emails", "")
-        # Convert to list of trimmed emails
         to_emails_list = [email.strip() for email in to_emails.split(",") if email.strip()]
         if not to_emails_list:
             return "No recipient emails provided.", 400
-        
-        # Get the action (Send, Schedule, or Draft)
+
         action = request.form.get("action")
 
         if action == "send":
-            # Send the email
             send_email(subject, body, to_emails_list)
-            # Optionally store the selected email details in session
             session['selected_email'] = {'subject': subject, 'body': body}
-            return redirect(url_for("finalize_email"))  # Redirect after sending the email
-        
-        elif action == "schedule":
-            # Schedule the email (implement the scheduling logic)
-            schedule_email(subject, body, to_emails_list)
-            return redirect(url_for("finalize_email"))  # Redirect after scheduling the email
-        
-        elif action == "draft":
-            # Save as draft (implement the save draft logic)
-            save_draft(subject, body, to_emails_list)
-            return redirect(url_for("finalize_email"))  # Redirect after saving as draft
+            return redirect(url_for("finalize_email"))
 
-    # For GET request, pass the subject and body values
+        elif action == "draft":
+            save_draft(subject, body, to_emails_list)
+            return redirect(url_for("finalize_email"))
+
+        elif action == "schedule":
+            schedule_type = request.form.get("schedule_type")
+
+            if schedule_type == "batch":
+                batch_count = int(request.form.get("batch_count", 10))
+                schedule_batch_emails(subject, body, to_emails_list, batch_count)
+
+            elif schedule_type == "fixed_time":
+                scheduled_time_str = request.form.get("scheduled_time")
+                try:
+                    scheduled_time = datetime.datetime.fromisoformat(scheduled_time_str)
+                except ValueError:
+                    return "Invalid date/time format.", 400
+
+                schedule_all_at_once(subject, body, to_emails_list, scheduled_time)
+
+            else:
+                return "Invalid schedule type selected.", 400
+
+            return redirect(url_for("finalize_email"))
+
     email = {
         "subject": subject,
         "body": body,
@@ -104,5 +115,23 @@ def finalize_email():
 
     return render_template("finalize.html", email=email)
 
+@app.route("/dashboard")
+def dashboard():
+    scheduled_emails = get_scheduled_emails()
+    sent_emails = []
+    if os.path.exists("sent_log.json"):
+        with open("sent_log.json", "r") as f:
+            sent_emails = json.load(f)
+    replies = fetch_replies(session.get("credentials", {}))
+
+    return render_template("dashboard.html", scheduled_emails=scheduled_emails, sent_emails=sent_emails, replies=replies)
+
+@app.template_filter("datetimeformat")
+def datetimeformat(value):
+    try:
+        # Convert milliseconds (Gmail API style) to readable date-time
+        return datetime.datetime.fromtimestamp(int(value) / 1000).strftime("%Y-%m-%d %I:%M %p")
+    except Exception:
+        return value  # fallback if parsing fails
 if __name__ == '__main__':
     app.run(debug=True)
