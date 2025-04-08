@@ -5,7 +5,7 @@ from langchain_core.output_parsers import JsonOutputParser
 
 
 def generate_email_variants(founder_data):
-    model = ChatGoogleGenerativeAI(model="gemini-1.5-pro", google_api_key="GEMINI_API_KEY",temperature=0.7)
+    model = ChatGoogleGenerativeAI(model="gemini-1.5-pro", google_api_key="GEMINI_API",temperature=0.5)
     parser = JsonOutputParser()
 
     prompt = PromptTemplate(

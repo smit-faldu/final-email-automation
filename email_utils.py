@@ -5,8 +5,10 @@ from googleapiclient.discovery import build
 from apscheduler.schedulers.background import BackgroundScheduler
 import base64
 from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 import datetime, math
 import re
+from email.mime.multipart import MIMEMultipart
 
 scheduler = BackgroundScheduler()
 scheduler.start()
@@ -30,16 +32,23 @@ def get_gmail_service():
     service = build('gmail', 'v1', credentials=creds)
     return service
 
-def create_message(sender, to_emails, subject, body_text):
-    to_header = ", ".join(to_emails) if isinstance(to_emails, list) else to_emails
-    message = MIMEText(body_text, "plain")
-    message["to"] = to_header
+def create_message(sender, to_emails, subject, body, use_bcc=True):
+    message = MIMEMultipart()
     message["from"] = sender
     message["subject"] = subject
 
+    if use_bcc:
+        message["to"] = sender  # dummy 'To' field
+        message["bcc"] = ", ".join(to_emails)
+    else:
+        message["to"] = ", ".join(to_emails)
+
+    message.attach(MIMEText(body, "plain"))
     raw = base64.urlsafe_b64encode(message.as_bytes()).decode()
     return raw
-def send_email(subject, body, to_emails, creds_dict=None):
+
+
+def send_email(subject, body, to_emails, creds_dict=None, investor_name=None):
     if creds_dict is None:
         creds_dict = session.get("credentials")
         if not creds_dict:
@@ -48,8 +57,13 @@ def send_email(subject, body, to_emails, creds_dict=None):
     creds = Credentials(**creds_dict)
     service = build("gmail", "v1", credentials=creds)
 
+    profile = service.users().getProfile(userId="me").execute()
+    sender_email = profile["emailAddress"]
+
+    # Use BCC if multiple recipients, else use TO
+    use_bcc = len(to_emails) > 1
     message = {
-        "raw": create_message("me", to_emails, subject, body)
+        "raw": create_message(sender_email, to_emails, subject, body, use_bcc=use_bcc)
     }
 
     service.users().messages().send(userId="me", body=message).execute()
@@ -59,8 +73,10 @@ def send_email(subject, body, to_emails, creds_dict=None):
         "to": to_emails,
         "subject": subject,
         "body": body,
+        "investor_name": investor_name,
         "timestamp": datetime.datetime.utcnow().isoformat()
     })
+
 
 def save_draft(subject, body, to_emails):
     creds_dict = session.get("credentials")
@@ -70,14 +86,15 @@ def save_draft(subject, body, to_emails):
     creds = Credentials(**creds_dict)
     service = build("gmail", "v1", credentials=creds)
 
-    raw_message = create_message("me", to_emails, subject, body)
+    raw_message = create_message("me", to_emails, subject, body, use_bcc=(len(to_emails) > 1))
     message = {'raw': raw_message}
-
     draft = {'message': message}
     service.users().drafts().create(userId="me", body=draft).execute()
 
+
 def scheduled_send(subject, body, to_emails, creds_dict):
     send_email(subject, body, to_emails, creds_dict)
+
 
 def schedule_batch_emails(subject, body, to_emails, batch_count):
     creds_dict = session.get("credentials")
@@ -100,6 +117,7 @@ def schedule_batch_emails(subject, body, to_emails, batch_count):
             }
         )
 
+
 def schedule_all_at_once(subject, body, to_emails, run_time):
     creds_dict = session.get("credentials")
     job_id = f"{run_time.timestamp()}-all"
@@ -116,6 +134,7 @@ def schedule_all_at_once(subject, body, to_emails, run_time):
         }
     )
 
+
 def get_scheduled_emails():
     return [
         {
@@ -127,6 +146,7 @@ def get_scheduled_emails():
         }
         for job in scheduler.get_jobs()
     ]
+
 
 def get_all_sent_to_emails(filepath="sent_log.json"):
     if not os.path.exists(filepath):
@@ -140,6 +160,7 @@ def get_all_sent_to_emails(filepath="sent_log.json"):
         else:
             emails.add(entry["to"])
     return emails
+
 
 def fetch_replies(creds_dict):
     creds = Credentials(**creds_dict)
@@ -173,3 +194,20 @@ def fetch_replies(creds_dict):
             })
 
     return replies
+
+def schedule_individual_email(subject, body, to_email, run_time):
+    creds_dict = session.get("credentials")
+    job_id = f"{run_time.timestamp()}-{to_email}"
+
+    scheduler.add_job(
+        func=scheduled_send,
+        trigger='date',
+        run_date=run_time,
+        id=job_id,
+        kwargs={
+            "subject": subject,
+            "body": body,
+            "to_emails": [to_email],
+            "creds_dict": creds_dict
+        }
+    )
