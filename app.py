@@ -59,63 +59,6 @@ def edit_email(variant):
 
     return render_template("edit.html", subject=email['subject'], body=email['body'])
 
-# @app.route("/finalize", methods=["GET", "POST"])
-# def finalize_email():
-#     if 'selected_email' not in session:
-#         return redirect(url_for("preview_emails"))
-
-#     subject = session['selected_email'].get('subject', '')
-#     body = session['selected_email'].get('body', '')
-
-#     if request.method == "POST":
-#         if "credentials" not in session:
-#             return redirect(url_for("auth.login"))
-
-#         to_emails = request.form.get("to_emails", "")
-#         to_emails_list = [email.strip() for email in to_emails.split(",") if email.strip()]
-#         if not to_emails_list:
-#             return "No recipient emails provided.", 400
-
-#         action = request.form.get("action")
-
-#         if action == "send":
-#             send_email(subject, body, to_emails_list)
-#             session['selected_email'] = {'subject': subject, 'body': body}
-#             return redirect(url_for("finalize_email"))
-
-#         elif action == "draft":
-#             save_draft(subject, body, to_emails_list)
-#             return redirect(url_for("finalize_email"))
-
-#         elif action == "schedule":
-#             schedule_type = request.form.get("schedule_type")
-
-#             if schedule_type == "batch":
-#                 batch_count = int(request.form.get("batch_count", 10))
-#                 schedule_batch_emails(subject, body, to_emails_list, batch_count)
-
-#             elif schedule_type == "fixed_time":
-#                 scheduled_time_str = request.form.get("scheduled_time")
-#                 try:
-#                     scheduled_time = datetime.datetime.fromisoformat(scheduled_time_str)
-#                 except ValueError:
-#                     return "Invalid date/time format.", 400
-
-#                 schedule_all_at_once(subject, body, to_emails_list, scheduled_time)
-
-#             else:
-#                 return "Invalid schedule type selected.", 400
-
-#             return redirect(url_for("finalize_email"))
-
-#     email = {
-#         "subject": subject,
-#         "body": body,
-#     }
-
-#     return render_template("finalize.html", email=email)
-
-
 @app.route("/finalize", methods=["GET", "POST"])
 def finalize_email():
     if 'selected_email' not in session:
